@@ -1,24 +1,38 @@
 #include "processor.h"
 
-void Run()
+Errors run()
 {
     stack_t stk = {};
 
     STACK_CTOR( &stk );
 
+    const char* filename = "machine_code.txt"; 
+
+    FILE* fp = fopen( filename, "rb" ); 
+
+    if ( !fp )
+        return READING_ERROR;
+
+    size_t file_size = count_file_size( fp );
+
+    char* buff = ( char * ) calloc( file_size, sizeof( char ) );
+    fread( buff, sizeof( char ), file_size, fp );
+
+    fclose( fp );
+
     while( 1 )
     {
-        char cmd[50] = "";
-        scanf( "%s", cmd );
+        int cmd = 0;
+        scanf( "%d", cmd );
 
-        if ( strcmp( cmd, "push" ) == 0 )
+        if ( cmd == PUSH )
         {
             stack_element_t arg = 0;
             scanf( "%d", &arg );
             stack_push( &stk, arg );
         }
 
-        else if ( strcmp( cmd, "sub" ) == 0 )
+        else if ( cmd == SUB )
         {
             stack_element_t stack_value_1 = stack_pop( &stk );
             stack_element_t stack_value_2 = stack_pop( &stk );
@@ -26,7 +40,7 @@ void Run()
             stack_push( &stk, stack_value_2 - stack_value_1 );
         }
 
-        else if ( strcmp( cmd, "add" ) == 0 )
+        else if ( cmd == ADD )
         {
             stack_element_t stack_value_1 = stack_pop( &stk );
             stack_element_t stack_value_2 = stack_pop( &stk );
@@ -34,7 +48,7 @@ void Run()
             stack_push( &stk, stack_value_2 + stack_value_1 );
         }
 
-        else if ( strcmp( cmd, "mul" ) == 0 )
+        else if ( cmd == MUL )
         {
             stack_element_t stack_value_1 = stack_pop( &stk );
             stack_element_t stack_value_2 = stack_pop( &stk );
@@ -42,7 +56,7 @@ void Run()
             stack_push( &stk, stack_value_2 * stack_value_1 );
         }
 
-        else if ( strcmp( cmd, "div" ) == 0 )
+        else if ( cmd == DIV )
         {
             stack_element_t stack_value_1 = stack_pop( &stk );
             stack_element_t stack_value_2 = stack_pop( &stk );
@@ -50,43 +64,52 @@ void Run()
             stack_push( &stk, stack_value_2 / stack_value_1 );
         }
 
-        else if ( strcmp( cmd, "sqrt" ) == 0 )
+        else if ( cmd == SQRT )
         {
             stack_element_t stack_value = stack_pop( &stk );
 
             stack_push( &stk, sqrt( stack_value ) );
         }
 
-        else if ( strcmp( cmd, "sin" ) == 0 )
+        else if ( cmd == SIN )
         {
             stack_element_t stack_value = stack_pop( &stk );
 
             stack_push( &stk, sin( stack_value ) );
         }
 
-        else if ( strcmp( cmd, "cos" ) == 0 )
+        else if ( cmd == COS )
         {
             stack_element_t stack_value = stack_pop( &stk );
 
             stack_push( &stk, cos( stack_value ) );
         }
 
-        else if ( strcmp( cmd, "out" ) == 0 )
+        else if ( cmd == OUT )
             fprintf( stderr, "%d", stack_pop( &stk ) );
 
-        else if ( strcmp( cmd, "in" ) == 0 )
+        else if ( cmd == IN )
         {
             stack_element_t arg = 0;
             scanf( "%d", &arg );
             stack_push( &stk, arg );
         }
 
-        else if ( strcmp( cmd, "dump" ) == 0 )
+        else if ( cmd == DUMP )
             STACK_DUMP( &stk );
 
-        else if ( strcmp( cmd, "hlt" ) == 0 )
+        else if ( cmd == HLT )
             break;
         else
             fprintf( stderr, "STNTERR: '%s'", cmd );
     }
+}
+
+int count_file_size( FILE* fp ) 
+{
+    fseek( fp, 0, SEEK_END );
+    size_t file_size = ftell( fp );                         
+    rewind ( fp );
+
+    return file_size;
 }
