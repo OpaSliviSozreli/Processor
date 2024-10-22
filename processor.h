@@ -3,31 +3,26 @@
 
 #include <stdio.h>
 #include <math.h> 
+#include <assert.h>
 
-#include "stack.h"
+#include "../const_lib/const.h"
+#include "../onegin_lib/input_and_output.h"
+#include "../stack_lib/stack.h"
 
-enum Errors
+
+const int NUMBER_OF_REGS = 10;
+
+struct Spu_t
 {
-    READING_ERROR
+    int* code;
+    int ip;
+    stack_t stk;
+    int* regs;
 };
 
-enum CmdValue
-{
-    PUSH,
-    ADD,
-    SUB,
-    MUL,
-    DIV,
-    OUT,
-    IN,
-    SQRT,
-    SIN,
-    COS,
-    DUMP,
-    HLT
-};
-
-Errors run();
-int  count_file_size( FILE* fp ) ;
+Errors run( FILE* fp );
+int    spu_dump( Spu_t* spu, stack_t* stk );
+Errors spu_ctor( FILE* fp, Spu_t* spu );
+int    spu_dtor( Spu_t* spu );
 
 #endif
