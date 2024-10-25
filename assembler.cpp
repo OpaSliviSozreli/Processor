@@ -2,6 +2,10 @@
 
 Errors assembler( PtrToLines* lines_parameters, OriginalText* original_text, LabelsTable* labels )
 {
+    assert( lines_parameters != nullptr );
+    assert( original_text    != nullptr );
+    assert( labels           != nullptr );
+    
     FILE* input_file = fopen( "original.txt", "rb" );
 
     if ( !input_file )
@@ -27,75 +31,63 @@ Errors assembler( PtrToLines* lines_parameters, OriginalText* original_text, Lab
 
         sscanf( lines_parameters->ptrs_to_strings[cur_str], "%s", first_word_in_line ); 
 
-        // TODO: CheckIfLabel
-
         if ( strcmp( first_word_in_line, "push" ) == 0 )
         {
             code[cur_arg_in_code++] == PUSH;               
             sscanf( lines_parameters->ptrs_to_strings[cur_str], "%s %d", first_word_in_line, arg );        
             code[cur_arg_in_code++] == arg;
+            check_if_lable( labels, first_word_in_line, cur_arg_in_code );
             cur_str++;
+        }
 
-           /// TOOO: move from here  if ( find_label( first_word_in_line ) == 1 )
-            {
-                if ( labels->type = NEXT )
-                {
-                    for ( size_t i = 0; i < NUMBER_OF_LABLES; i++ )
-                    {
-                        if ( labels[i].label->pointer == -1 &&
-                             labels[i].label->name == nullptr )
-                        {
-                            labels[i].label->pointer = PUSH;
-                            labels[i].label->name = first_word_in_line;
-
-                            break;
-                        }
-
-                        else if ( labels[i].label->pointer == -1 &&
-                                  strcmp( labels[i].label->name, first_word_in_line ) == 0 )
-                        {
-                            labels[i].label->pointer = PUSH;
-                            break;
-                        }
-
-                    }
-                }
-            }
+        else if ( strcmp( first_word_in_line, "pop" ) == 0 )
+        {
+            code[cur_arg_in_code++] == POP;
+            sscanf( lines_parameters->ptrs_to_strings[cur_str], "%s %d", first_word_in_line, arg );        
+            code[cur_arg_in_code++] == arg;
+            check_if_lable( labels, first_word_in_line, cur_arg_in_code );
+            cur_str++;
         }
 
         else if ( strcmp( first_word_in_line, "add" ) == 0 )
         {
             code[cur_arg_in_code++] == ADD;
+            check_if_lable( labels, first_word_in_line, cur_arg_in_code );
             cur_str++;
         }
 
         else if ( strcmp( first_word_in_line, "sub" ) == 0 )
         {
             code[cur_arg_in_code++] == SUB;
+            check_if_lable( labels, first_word_in_line, cur_arg_in_code );
             cur_str++;
         }
 
         else if ( strcmp( first_word_in_line, "mul" ) == 0 )
         {
             code[cur_arg_in_code++] == MUL;
+            check_if_lable( labels, first_word_in_line, cur_arg_in_code );
             cur_str++;
         }
 
         else if ( strcmp( first_word_in_line, "div" ) == 0 )
         {
             code[cur_arg_in_code++] == DIV;
+            check_if_lable( labels, first_word_in_line, cur_arg_in_code );
             cur_str++;
         }
 
         else if ( strcmp( first_word_in_line, "out" ) == 0 )
         {
             code[cur_arg_in_code++] == OUT;
+            check_if_lable( labels, first_word_in_line, cur_arg_in_code );
             cur_str++; 
         }
 
         else if ( strcmp( first_word_in_line, "in" ) == 0 )
         {
             code[cur_arg_in_code++] == IN;
+            check_if_lable( labels, first_word_in_line, cur_arg_in_code );
             cur_str++;
         }
 
@@ -104,6 +96,7 @@ Errors assembler( PtrToLines* lines_parameters, OriginalText* original_text, Lab
             code[cur_arg_in_code++] == SQRT;                    
             sscanf ( lines_parameters->ptrs_to_strings[cur_str], "%s %d", first_word_in_line, arg );        
             code[cur_arg_in_code++] == arg;
+            check_if_lable( labels, first_word_in_line, cur_arg_in_code );
             cur_str++; 
         }
 
@@ -112,6 +105,7 @@ Errors assembler( PtrToLines* lines_parameters, OriginalText* original_text, Lab
             code[cur_arg_in_code++] == SIN;                    
             sscanf ( lines_parameters->ptrs_to_strings[cur_str], "%s %d", first_word_in_line, arg );        
             code[cur_arg_in_code++] == arg;
+            check_if_lable( labels, first_word_in_line, cur_arg_in_code );
             cur_str++;
         }
 
@@ -120,18 +114,21 @@ Errors assembler( PtrToLines* lines_parameters, OriginalText* original_text, Lab
             code[cur_arg_in_code++] == COS;                    
             sscanf ( lines_parameters->ptrs_to_strings[cur_str], "%s %d", first_word_in_line, arg );        
             code[cur_arg_in_code++] == arg;
+            check_if_lable( labels, first_word_in_line, cur_arg_in_code );
             cur_str++;
         }
 
         else if ( strcmp( first_word_in_line, "dump" ) == 0 )
         {
             code[cur_arg_in_code++] == DUMP;
+            check_if_lable( labels, first_word_in_line, cur_arg_in_code );
             cur_str++; 
         }
 
         else if( strcmp( first_word_in_line, "hlt" ) == 0 )
         {
             code[cur_arg_in_code++] == HLT;
+            check_if_lable( labels, first_word_in_line, cur_arg_in_code );
             break;
         }
     }
@@ -146,29 +143,36 @@ Errors assembler( PtrToLines* lines_parameters, OriginalText* original_text, Lab
     fclose( output_file );
 }
 
-bool find_label( const char* str ) // TODO: replae find_label with strchr 
-{
-    bool islabel = 0;
-    char ch = 0;
-
-    for (int i = 0; ch != '\0'; i++)
-    {
-        ch = str[i];
-
-        if ( ch == ':' )
-        {
-            islabel = 1;
-            break;
-        } 
-    }
-
-    return islabel;
-}
-
 void lable_table_ctor( LabelsTable* labels )
 {
     assert( labels != nullptr );
 
     for ( size_t i = 0; i < NUMBER_OF_LABLES; i++ )
         labels[i].label->pointer = -1;
+}
+
+int check_if_lable( LabelsTable* labels, char* first_word_in_line, int cur_arg_in_code )
+{
+    if ( strchr( ( const char* )first_word_in_line, ':' ) != nullptr )
+    {
+        for ( size_t i = 0; i < NUMBER_OF_LABLES; i++ )
+        {
+            if ( labels[i].label->pointer == -1 &&
+                    labels[i].label->name == nullptr )
+            {
+                labels[i].label->pointer = cur_arg_in_code;
+                labels[i].label->name = first_word_in_line;
+
+                break;
+            }
+
+            else if ( labels[i].label->pointer == -1 &&
+                        strcmp( labels[i].label->name, first_word_in_line ) == 0 )
+            {
+                labels[i].label->pointer = cur_arg_in_code;
+                break;
+            }
+
+        }
+    }
 }

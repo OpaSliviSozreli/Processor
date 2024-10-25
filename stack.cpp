@@ -1,22 +1,22 @@
 #include "stack.h"
 
-int stack_ctor( stack_t *stk ON_DEBUG(, const char* file, int line ) )
+int stack_ctor( stack_t *stk ON_DEBUG( , const char* file, int line ) )
 {
-    ON_DEBUG(
-            stk->file = file;
-            stk->line = line;
+    ON_DEBUG( 
+            stk->file_name = file;
+            stk->line      = line;
             )
 
     stk->size = 0;
     stk->capacity = 28;
     
-    stk->data = ( stack_element_t* )calloc( stk->capacity, sizeof( stack_element_t ) +  sizeof( canary_t ) );
-    stk->data = stk->data + sizeof( canary_t );
+    stk->data = ( stack_element_t* )calloc( stk->capacity, sizeof( stack_element_t ) + sizeof( canary_t ) );
+    stk->data = ( stack_element_t* )( ( char* )stk->data + sizeof( canary_t ) ); 
 
-    //stk->hash = MurmurHash2( ( char* )stk, _HASH_SIZE_ );
+    stk->hash = MurmurHash2( ( char* )stk->data, stk->capacity * sizeof( stack_element_t ) );
  
     *( canary_t* )( ( char* )stk->data - sizeof( canary_t ) ) = _LEFT_CANARY_;
-    *( canary_t* )( ( char* )stk->data + stk->capacity * sizeof( stack_element_t ) + sizeof( canary_t ) ) = _RIGHT_CANARY_; 
+    *( canary_t* )( ( char* )stk->data + stk->capacity * sizeof( stack_element_t ) ) = _RIGHT_CANARY_;
 
     stk->left_struct_canary  = _STRUCT_LEFT_CANARY_;
     stk->right_struct_canary = _STRUCT_RIGHT_CANARY_;
@@ -83,8 +83,8 @@ unsigned int MurmurHash2 ( char* key, unsigned int len )
     case 1:
       h ^= data[0];
       h *= m;
-    // default:
-    //   assert ( 0 && "Hash function doesnt work right" );
+    default:
+      assert ( 0 && "Hash function doesnt work right" );
   };
 
   h ^= h >> 13;
@@ -98,6 +98,8 @@ int stack_error( const stack_t* stk )
 {
     if ( stk == NULL )
         return PTR_IS_ZERO;
+    if ( stk->data == NULL )
+        return PTR_TO_DATA_IS_ZERO;
     if ( stk->size < 0 )
         return STACK_WRONG_SIZE;
     if ( stk->capacity < 0 )
@@ -110,34 +112,21 @@ int stack_error( const stack_t* stk )
         return STACK_RIGHT_CANARY_PROBLEM;
     if ( *( canary_t* )( ( char* )stk->data - sizeof( canary_t ) ) != _LEFT_CANARY_ )
         return LEFT_CANARY_PROBLEM;
-    // if ( *( canary_t* )( ( char* )stk->data + stk->capacity * sizeof( stack_element_t ) + sizeof( canary_t ) ) != 0 )
-    //     return RIGHT_CANARY_PROBLEM;
-    // if ( stk->hash != MurmurHash2( ( char* )stk, _HASH_SIZE_ ) )
-    //     return HASH_PROBLEM;
+    if ( *( canary_t* )( ( char* )stk->data + stk->capacity * sizeof( stack_element_t ) + sizeof( canary_t ) ) != 0 )
+        return RIGHT_CANARY_PROBLEM;
+    if ( stk->hash != MurmurHash2( ( char* )stk->data, stk->capacity * sizeof( stack_element_t ) ) )
+        return HASH_PROBLEM;
         
     return STACK_OK;
 }
 
 int dump( stack_t* stk ON_DEBUG( , const char* file, int line ) )
 {
-    ON_DEBUG(
-        stk->file = file;
-        stk->line = line;
-            )
     STACK_ASSERT( stk );
-
-    FILE* log_file = fopen( "Log_file.txt", "wb" ); 
-
-    setvbuf( log_file, NULL, _IONBF, 0 );
-
-    if ( !log_file )
-        return CANT_OPEN_LOG_FILE;
  
     fprintf( stderr, "the data is %p\n", stk->data );
 
-
-    fprintf( stderr, "called from %s %s \n", __func__, __FILE__ );
-    fprintf( stderr, " named stack born at %s %s \n", __func__, __FILE__ );
+    fprintf( stderr, " named stack born in line %d at file %s \n" ON_DEBUG( stk->line, stk->file_name ) ); // TODO: fix
 
     fprintf( stderr, "capacity is %d\n", stk->capacity );
 
@@ -151,12 +140,10 @@ int dump( stack_t* stk ON_DEBUG( , const char* file, int line ) )
     fprintf( stderr, "right canary in struct is %0X\n", stk->right_struct_canary );
 
     fprintf( stderr, "left canary in data is %0X\n", *( canary_t* )( ( char* )stk->data - sizeof( canary_t ) ) );
-    fprintf( stderr, "right canary in data is %0X\n", *( canary_t* )( ( char* )stk->data + stk->capacity * sizeof( stack_element_t ) + sizeof( canary_t ) ) );
+    fprintf( stderr, "right canary in data is %0X\n", *( canary_t* )( ( char* )stk->data + stk->capacity * sizeof( stack_element_t ) ) );
 
     for ( int i = 0; i < stk->capacity - 1; i++ )
         fprintf( stderr, "[%d] elem: data value is <%d>\n", i, stk->data[i] );
-
-    fclose ( log_file );
 
     STACK_ASSERT( stk );
 
@@ -212,16 +199,16 @@ void my_realloc( stack_t *stk )
     if ( stk->size == stk->capacity )
     {
         stk->data = ( stack_element_t* )realloc( ( char* )stk->data - sizeof( canary_t ), stk->capacity * 2 * sizeof( stack_element_t ) + 2 * sizeof( canary_t ) );
-        stk->data = stk->data + sizeof( canary_t );
+        stk->data = ( stack_element_t* )( ( char* )stk->data + sizeof( canary_t ) );
 
         set_poison( stk );
     }
     if ( stk->size ==  stk->capacity / 4 )
     { 
         stk->data = ( stack_element_t* )realloc( ( char* )stk->data - sizeof( canary_t ), stk->capacity / 2 * sizeof( stack_element_t ) + 2 * sizeof( canary_t ) );
-        stk->data = stk->data + sizeof( canary_t );      
+        stk->data = ( stack_element_t* )( ( char* )stk->data + sizeof( canary_t ) );      
 
-        stk->capacity = stk->capacity / 2;
+        stk->capacity = stk->capacity / 4; 
     }
     STACK_ASSERT( stk );
 }

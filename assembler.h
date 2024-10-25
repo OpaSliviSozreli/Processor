@@ -20,12 +20,12 @@ struct LabelParameters
 struct LabelsTable
 {
     LabelParameters label[NUMBER_OF_LABLES];
-    bool islable;
-    TypeOfLable type;
+    bool is_lable;
 };
 
 Errors assembler( PtrToLines* lines_parameters, OriginalText* original_text );
 bool   find_label( const char* str );
 void   lable_table_ctor( LabelsTable* labels );
+int check_if_lable( LabelsTable* labels, char* first_word_in_line, int cur_arg_in_code );
 
 #endif

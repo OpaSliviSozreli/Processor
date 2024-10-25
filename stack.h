@@ -15,14 +15,8 @@ typedef unsigned long long canary_t;
     #define ON_DEBUG( ... )
 #endif
 
-#ifdef ON_DEBUG
-    #define _HASH_SIZE_ sizeof( canary_t ) + 2 * sizeof( char* ) + 3 * sizeof( int ) + sizeof( stack_element_t* )
-#else
-    #define _HASH_SIZE_ sizeof( canary_t ) + 2 * sizeof( int ) + sizeof( stack_element_t* )
-#endif
-
 #define CHECK_( stk ) if ( stack_error( stk ) != STACK_OK ) stk_error =
-#define STACK_CTOR( stk ) stack_ctor( ( stk ) ON_DEBUG(, __FILE__, __LINE__ ) )
+#define STACK_CTOR( stk ) stack_ctor( ( stk ) ON_DEBUG( , __FILE__, __LINE__ ) )
 #define STACK_DUMP( stk )  dump( ( stk ) ON_DEBUG( , __FILE__, __LINE__ ) )
 #define STACK_ASSERT( stk )  if ( stack_assert_func( ( stk ) ) != STACK_OK )\
                                  STACK_DUMP ( stk );
@@ -58,7 +52,8 @@ enum ErrorCode
 {
     STACK_OK,        
     SIZE_IS_ZERO,         
-    PTR_IS_ZERO,        
+    PTR_IS_ZERO,  
+    PTR_TO_DATA_IS_ZERO,      
     STACK_WRONG_SIZE,     
     CAPACITY_IS_NEGATIVE, 
     STACK_OVERFLOW,    
@@ -70,7 +65,7 @@ enum ErrorCode
     HASH_PROBLEM
 };
                             
-int             stack_ctor( stack_t *stk ON_DEBUG(, const char* file, int line ) );
+int             stack_ctor( stack_t *stk ON_DEBUG( , const char* file, int line ) );
 int             stack_dtor( stack_t* stk );
 int             dump( stack_t* stk ON_DEBUG( , const char* file, int line ) );
 int             stack_assert_func( stack_t *stk );
